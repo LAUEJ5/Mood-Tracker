@@ -1,4 +1,39 @@
-import tkinter as tk
+import cv2
+import mediapipe as mp
+
+mp_face_mesh = mp.solutions.face_mesh
+face_mesh = mp_face_mesh.FaceMesh()
+mp_drawing = mp.solutions.drawing_utils
+
+cap = cv2.VideoCapture(0)
+
+while cap.isOpened():
+    success, image = cap.read()
+    if not success:
+        break
+
+    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    results = face_mesh.process(image_rgb)
+
+    if results.multi_face_landmarks:
+        for face_landmarks in results.multi_face_landmarks:
+            mp_drawing.draw_landmarks(
+                image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION
+            )
+
+    cv2.imshow('MediaPipe FaceMesh', image)
+    if cv2.waitKey(5) & 0xFF == 27:
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+
+
+
+
+
+
+'''import tkinter as tk
 from tkinter import Canvas, Label, Toplevel
 from PIL import Image, ImageTk
 import threading
@@ -296,3 +331,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+'''
