@@ -22,7 +22,7 @@ while cap.isOpened():
             analyzer.mp_drawing.draw_landmarks(
                 image, face_landmarks, analyzer.mp_face_mesh.FACEMESH_TESSELATION
             )
-            '''important_indices = list(range(468))
+            important_indices = list(range(468))
             h, w, _ = image.shape
 
             for idx in important_indices:
@@ -30,7 +30,7 @@ while cap.isOpened():
                 x, y = int(lm.x * w), int(lm.y * h)
                 cv2.circle(image, (x, y), 4, (0, 255, 0), -1)
                 cv2.putText(image, str(idx), (x + 5, y - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)'''
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
 
             if not baseline_set:
@@ -46,4 +46,3 @@ while cap.isOpened():
 
 cap.release()
 cv2.destroyAllWindows()
-print("Furrow count:", analyzer.furrow_count)
