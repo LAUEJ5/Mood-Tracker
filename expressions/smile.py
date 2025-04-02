@@ -34,8 +34,8 @@ class SmileExpression(BaseExpression):
         curr_left = self.get_distance(landmarks[self.left_mouth], landmarks[self.left_eye]) / eye_dist
         curr_right = self.get_distance(landmarks[self.right_mouth], landmarks[self.right_eye]) / eye_dist
 
-        left_threshold = self.baseline_left * 0.98
-        right_threshold = self.baseline_right * 0.98
+        left_threshold = self.baseline_left * 0.97
+        right_threshold = self.baseline_right * 0.97
 
         smile_now = curr_left < left_threshold and curr_right < right_threshold
 
