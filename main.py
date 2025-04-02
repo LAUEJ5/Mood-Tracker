@@ -1,15 +1,20 @@
 import cv2
 import mediapipe as mp
 from expressions.eyebrows import EyebrowExpression
+from expressions.smile import SmileExpression
 
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh()
 mp_drawing = mp.solutions.drawing_utils
 
 eyebrows = EyebrowExpression()
+smile = SmileExpression()
 
 cap = cv2.VideoCapture(0)
-baseline_set = False
+calibrated = False
+tracking = False
+print("Relax your face completely and get close to the camera.")
+print("Press ENTER to calibrate.")
 
 while cap.isOpened():
     success, image = cap.read()
@@ -26,22 +31,38 @@ while cap.isOpened():
                 image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION
             )
 
-            '''
             h, w, _ = image.shape
-            for idx in range(468):
+            for idx in range(263, 264):
                 lm = landmarks[idx]
                 x, y = int(lm.x * w), int(lm.y * h)
                 cv2.circle(image, (x, y), 2, (0, 255, 0), -1)
                 cv2.putText(image, str(idx), (x + 5, y - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)'''
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
 
-            if not baseline_set:
-                eyebrows.set_baseline(landmarks)
-                baseline_set = True
-                print("Baseline set.")
-            eyebrows.update(landmarks)
+            if not calibrated:
+                cv2.imshow('Facial Tracker', image)
+                if cv2.waitKey(1) & 0xFF == 13:
+                    eyebrows.set_baseline(landmarks)
+                    smile.set_baseline(landmarks)
+                    calibrated = True
+                    print("Calibration complete! Press ENTER again to start tracking.")
+                continue
 
-    cv2.imshow('MediaPipe FaceMesh', image)
+            if calibrated and not tracking:
+                cv2.imshow('Facial Tracker', image)
+                if cv2.waitKey(1) & 0xFF == 13:
+                    tracking = True
+                    print("Tracking started. Facial expression counts active.")
+                continue
+
+            if tracking:
+                smile_state = smile.update(landmarks)
+                
+                if smile_state != "smile":
+                    eyebrows.update(landmarks)
+
+
+    cv2.imshow('Facial Tracker', image)
     if cv2.waitKey(5) & 0xFF == 27:
         break
 
