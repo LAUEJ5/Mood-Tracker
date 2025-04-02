@@ -31,13 +31,15 @@ while cap.isOpened():
                 image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION
             )
 
+            '''upper_lip_indices = [13, 312, 82]
+            lower_lip_indices = [14, 87, 317]
             h, w, _ = image.shape
-            for idx in range(13, 15):
+            for idx in upper_lip_indices + lower_lip_indices:
                 lm = landmarks[idx]
                 x, y = int(lm.x * w), int(lm.y * h)
                 cv2.circle(image, (x, y), 2, (0, 255, 0), -1)
                 cv2.putText(image, str(idx), (x + 5, y - 5),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0), 1)'''
 
             if not calibrated:
                 cv2.imshow('Facial Tracker', image)

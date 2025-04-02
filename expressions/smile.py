@@ -18,8 +18,12 @@ class SmileExpression(BaseExpression):
         self.open_smile_count = 0
         self.closed_smile_count = 0
 
-        self.smile_end_buffer = 0  # countdown before ending a smile
-        self.buffer_frames = 5     # number of frames to wait before ending smile
+        self.smile_end_buffer = 0 
+        self.buffer_frames = 5
+
+        self.post_smile_grace = 0
+        self.grace_duration = 20
+
 
     def set_baseline(self, landmarks):
         eye_dist = self.get_distance(landmarks[33], landmarks[263])
@@ -29,19 +33,27 @@ class SmileExpression(BaseExpression):
     def update(self, landmarks):
         if self.baseline_left is None or self.baseline_right is None:
             return None
+        if self.post_smile_grace > 0:
+            self.post_smile_grace -= 1
+            return "neutral"
 
         eye_dist = self.get_distance(landmarks[33], landmarks[263])
         curr_left = self.get_distance(landmarks[self.left_mouth], landmarks[self.left_eye]) / eye_dist
         curr_right = self.get_distance(landmarks[self.right_mouth], landmarks[self.right_eye]) / eye_dist
 
-        left_threshold = self.baseline_left * 0.97
-        right_threshold = self.baseline_right * 0.97
+        left_threshold = self.baseline_left * 0.965
+        right_threshold = self.baseline_right * 0.965
 
         smile_now = curr_left < left_threshold and curr_right < right_threshold
 
-        upper_lip = landmarks[self.upper_lip_index]
-        lower_lip = landmarks[self.lower_lip_index]
-        lip_gap = self.get_distance(upper_lip, lower_lip) / eye_dist
+        upper_lip_indices = [13, 312, 82]
+        lower_lip_indices = [14, 87, 317]
+
+        upper_avg = self.get_average_landmark(upper_lip_indices, landmarks)
+        lower_avg = self.get_average_landmark(lower_lip_indices, landmarks)
+
+        lip_gap = self.get_distance(upper_avg, lower_avg) / eye_dist
+
 
         open_now = lip_gap > 0.05
 
@@ -61,6 +73,7 @@ class SmileExpression(BaseExpression):
             self.smile_end_buffer -= 1
             if self.smile_end_buffer <= 0:
                 self.smile_active = False
+                self.post_smile_grace = self.grace_duration  # Grace period starts
                 self.smile_count += 1
                 print(f"Smile #{self.smile_count}")
                 if self.smile_was_open:
