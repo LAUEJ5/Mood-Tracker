@@ -11,7 +11,9 @@ class SmileExpression(BaseExpression):
         self.lower_lip_index = 14
         self.baseline_left = None
         self.baseline_right = None
-        self.past_state = "neutral"
+
+        self.smile_active = False
+        self.smile_was_open = False
         self.smile_count = 0
         self.open_smile_count = 0
         self.closed_smile_count = 0
@@ -32,24 +34,33 @@ class SmileExpression(BaseExpression):
         left_threshold = self.baseline_left * 0.98
         right_threshold = self.baseline_right * 0.98
 
-        expression = "neutral"
-        if curr_left < left_threshold and curr_right < right_threshold:
-            expression = "smile"
+        smile_now = curr_left < left_threshold and curr_right < right_threshold
 
-        if self.past_state == "neutral" and expression == "smile":
+        upper_lip = landmarks[self.upper_lip_index]
+        lower_lip = landmarks[self.lower_lip_index]
+        lip_gap = self.get_distance(upper_lip, lower_lip) / eye_dist
+
+        open_now = lip_gap > 0.03
+
+        # Smile Start
+        if smile_now and not self.smile_active:
+            self.smile_active = True
+            self.smile_was_open = open_now 
+
+        # Smile Ongoing 
+        elif smile_now and self.smile_active:
+            self.smile_was_open = self.smile_was_open or open_now
+
+        # Smile End
+        elif not smile_now and self.smile_active:
+            self.smile_active = False
             self.smile_count += 1
             print(f"Smile #{self.smile_count}")
-
-            upper_lip = landmarks[self.upper_lip_index]
-            lower_lip = landmarks[self.lower_lip_index]
-            lip_gap = self.get_distance(upper_lip, lower_lip) / eye_dist
-
-            if lip_gap > 0.03:
+            if self.smile_was_open:
                 self.open_smile_count += 1
                 print(f"Open-mouth smile #{self.open_smile_count}")
             else:
                 self.closed_smile_count += 1
                 print(f"Closed-mouth smile #{self.closed_smile_count}")
 
-        self.past_state = expression
-        return expression
+        return "smile" if smile_now else "neutral"
