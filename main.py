@@ -2,6 +2,7 @@ import cv2
 import mediapipe as mp
 from expressions.eyebrows import EyebrowExpression
 from expressions.smile import SmileExpression
+from expressions.eyes import BlinkExpression
 
 mp_face_mesh = mp.solutions.face_mesh
 face_mesh = mp_face_mesh.FaceMesh()
@@ -9,6 +10,7 @@ mp_drawing = mp.solutions.drawing_utils
 
 eyebrows = EyebrowExpression()
 smile = SmileExpression()
+blink = BlinkExpression()
 
 cap = cv2.VideoCapture(0)
 calibrated = False
@@ -31,10 +33,9 @@ while cap.isOpened():
                 image, face_landmarks, mp_face_mesh.FACEMESH_TESSELATION
             )
 
-            '''upper_lip_indices = [13, 312, 82]
-            lower_lip_indices = [14, 87, 317]
+            '''list = [234, 454]
             h, w, _ = image.shape
-            for idx in upper_lip_indices + lower_lip_indices:
+            for idx in list:
                 lm = landmarks[idx]
                 x, y = int(lm.x * w), int(lm.y * h)
                 cv2.circle(image, (x, y), 2, (0, 255, 0), -1)
@@ -46,6 +47,7 @@ while cap.isOpened():
                 if cv2.waitKey(1) & 0xFF == 13:
                     eyebrows.set_baseline(landmarks)
                     smile.set_baseline(landmarks)
+                    blink.set_baseline(landmarks)
                     calibrated = True
                     print("Calibration complete! Press ENTER again to start tracking.")
                 continue
@@ -58,8 +60,8 @@ while cap.isOpened():
                 continue
 
             if tracking:
+                blink.update(landmarks)
                 smile_state = smile.update(landmarks)
-                
                 if smile_state != "smile":
                     eyebrows.update(landmarks)
 
