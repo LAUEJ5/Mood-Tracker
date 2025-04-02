@@ -18,6 +18,9 @@ class SmileExpression(BaseExpression):
         self.open_smile_count = 0
         self.closed_smile_count = 0
 
+        self.smile_end_buffer = 0  # countdown before ending a smile
+        self.buffer_frames = 5     # number of frames to wait before ending smile
+
     def set_baseline(self, landmarks):
         eye_dist = self.get_distance(landmarks[33], landmarks[263])
         self.baseline_left = self.get_distance(landmarks[self.left_mouth], landmarks[self.left_eye]) / eye_dist
@@ -40,27 +43,31 @@ class SmileExpression(BaseExpression):
         lower_lip = landmarks[self.lower_lip_index]
         lip_gap = self.get_distance(upper_lip, lower_lip) / eye_dist
 
-        open_now = lip_gap > 0.03
+        open_now = lip_gap > 0.05
 
-        # Smile Start
+        # Smile start
         if smile_now and not self.smile_active:
             self.smile_active = True
-            self.smile_was_open = open_now 
+            self.smile_was_open = open_now
+            self.smile_end_buffer = self.buffer_frames
 
-        # Smile Ongoing 
+        # Smile ongoing
         elif smile_now and self.smile_active:
             self.smile_was_open = self.smile_was_open or open_now
+            self.smile_end_buffer = self.buffer_frames  # reset buffer when smile continues
 
-        # Smile End
+        # Smile potential end — wait for buffer to count down
         elif not smile_now and self.smile_active:
-            self.smile_active = False
-            self.smile_count += 1
-            print(f"Smile #{self.smile_count}")
-            if self.smile_was_open:
-                self.open_smile_count += 1
-                print(f"Open-mouth smile #{self.open_smile_count}")
-            else:
-                self.closed_smile_count += 1
-                print(f"Closed-mouth smile #{self.closed_smile_count}")
+            self.smile_end_buffer -= 1
+            if self.smile_end_buffer <= 0:
+                self.smile_active = False
+                self.smile_count += 1
+                print(f"Smile #{self.smile_count}")
+                if self.smile_was_open:
+                    self.open_smile_count += 1
+                    print(f"Open-mouth smile #{self.open_smile_count}")
+                else:
+                    self.closed_smile_count += 1
+                    print(f"Closed-mouth smile #{self.closed_smile_count}")
 
-        return "smile" if smile_now else "neutral"
+        return "smile" if self.smile_active else "neutral"
